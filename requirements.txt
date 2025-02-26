@@ -1,7 +1,3 @@
-fastapi
-uvicorn
-pypdf
-google-generativeai
-python-multipart
-sqlite3
+streamlit
 requests
+pandas
