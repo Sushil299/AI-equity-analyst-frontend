@@ -18,22 +18,30 @@ st.title("📊 AI Equity Analyst")
 
 # Fetch Available Companies
 st.sidebar.header("Select a Company")
-companies_response = requests.get(f"{BACKEND_URL}/companies")
-company_list = companies_response.json().get("companies", [])
+
+try:
+    companies_response = requests.get(f"{BACKEND_URL}/companies")
+    companies_response.raise_for_status()
+    company_list = companies_response.json().get("companies", [])
+except requests.exceptions.RequestException:
+    company_list = []
+    st.sidebar.error("❌ Failed to load companies. Check backend connection.")
 
 if company_list:
     company_name = st.sidebar.selectbox("Choose a Company", company_list)
     if st.sidebar.button("Get Comprehensive Analysis"):
-        response = requests.get(f"{BACKEND_URL}/summary/{company_name}")
-        if response.status_code == 200:
-            analysis = response.json().get("Comprehensive Analysis", "")
+        try:
+            response = requests.get(f"{BACKEND_URL}/summary/{company_name}")
+            response.raise_for_status()
+            analysis = response.json().get("final_summary", "")
+
             if analysis:
                 st.markdown("## AI-Powered Equity Research Report")
                 st.write(analysis)
                 st.markdown("---")
             else:
                 st.warning("⚠️ No analysis available for this company.")
-        else:
+        except requests.exceptions.RequestException:
             st.error("❌ Failed to fetch analysis.")
 else:
     st.sidebar.warning("⚠️ No companies available. Try uploading data.")
