@@ -9,8 +9,6 @@ Original file is located at
 
 import streamlit as st
 import requests
-import matplotlib.pyplot as plt
-import pandas as pd
 
 # Backend URL
 BACKEND_URL = "https://ai-equity-analyst.onrender.com"
@@ -18,79 +16,35 @@ BACKEND_URL = "https://ai-equity-analyst.onrender.com"
 st.set_page_config(page_title="AI Equity Analyst", layout="wide")
 st.title("📊 AI Equity Analyst")
 
-# ✅ Move company selection to the main layout (Fixes Mobile Issue)
-col1, col2 = st.columns([3, 1])
+# Fetch Available Companies
+st.sidebar.header("Select a Company")
 
-with col1:
-    try:
-        companies_response = requests.get(f"{BACKEND_URL}/companies")
-        companies_response.raise_for_status()
-        company_list = companies_response.json().get("companies", [])
-    except requests.exceptions.RequestException:
-        company_list = []
-        st.error("❌ Failed to load companies. Check backend connection.")
+try:
+    companies_response = requests.get(f"{BACKEND_URL}/companies")
+    companies_response.raise_for_status()
+    company_list = companies_response.json().get("companies", [])
+except requests.exceptions.RequestException:
+    company_list = []
+    st.sidebar.error("❌ Failed to load companies. Check backend connection.")
 
-    if company_list:
-        company_name = st.selectbox("Choose a Company", company_list)
-    else:
-        st.warning("⚠️ No companies available. Try uploading data.")
+if company_list:
+    company_name = st.sidebar.selectbox("Choose a Company", company_list)
+    if st.sidebar.button("Get Comprehensive Analysis"):
+        try:
+            response = requests.get(f"{BACKEND_URL}/summary/{company_name}")
+            response.raise_for_status()
+            analysis = response.json().get("final_summary", "")
 
-with col2:
-    get_analysis = st.button("🔍 Get Analysis")
-
-if get_analysis and company_list:
-    try:
-        response = requests.get(f"{BACKEND_URL}/summary/{company_name}")
-        response.raise_for_status()
-        data = response.json()
-        analysis = data.get("final_summary", "")
-        financial_data = data.get("financial_data", {})
-
-        if analysis:
-            st.markdown("## 📜 AI-Powered Equity Research Report")
-            st.write(analysis)
-            st.markdown("---")
-        else:
-            st.warning("⚠️ No analysis available for this company.")
-
-        # ✅ Extract and plot financial trends if available
-        if financial_data:
-            st.markdown("## 📊 Financial Trends & Analysis")
-
-            # 📈 Revenue Trend Chart
-            revenue_trend = financial_data.get("revenue_trend", [])
-            if revenue_trend:
-                quarters, revenue = zip(*revenue_trend)
-                fig, ax = plt.subplots()
-                ax.plot(quarters, revenue, marker="o", linestyle="-", color="b")
-                ax.set_xlabel("Quarter")
-                ax.set_ylabel("Revenue ($M)")
-                ax.set_title(f"{company_name} - Revenue Growth Over Time")
-                st.pyplot(fig)
+            if analysis:
+                st.markdown("## AI-Powered Equity Research Report")
+                st.write(analysis)
                 st.markdown("---")
-
-            # 📈 Net Profit Trend Chart
-            net_profit_trend = financial_data.get("net_profit_trend", [])
-            if net_profit_trend:
-                quarters, profit = zip(*net_profit_trend)
-                fig, ax = plt.subplots()
-                ax.plot(quarters, profit, marker="o", linestyle="--", color="g")
-                ax.set_xlabel("Quarter")
-                ax.set_ylabel("Net Profit ($M)")
-                ax.set_title(f"{company_name} - Net Profit Trend")
-                st.pyplot(fig)
-                st.markdown("---")
-
-            # 📊 Valuation Comparison Table
-            valuation = financial_data.get("valuation", {})
-            if valuation:
-                df = pd.DataFrame(valuation.items(), columns=["Metric", "Value"])
-                st.markdown("### 📊 Valuation Metrics")
-                st.table(df)
-                st.markdown("---")
-
-    except requests.exceptions.RequestException:
-        st.error("❌ Failed to fetch analysis.")
+            else:
+                st.warning("⚠️ No analysis available for this company.")
+        except requests.exceptions.RequestException:
+            st.error("❌ Failed to fetch analysis.")
+else:
+    st.sidebar.warning("⚠️ No companies available. Try uploading data.")
 
 # 🔹 Disclaimer Section
 st.markdown("---")
