@@ -1,28 +1,27 @@
 import streamlit as st
 import requests
 
-# Backend URL
+# Backend URLs
 BACKEND_URL = "https://ai-equity-analyst.onrender.com"
 REDDIT_BACKEND_URL = "https://reddit-opinion-backend.onrender.com/"
 
-st.set_page_config(page_title="Stock Market Insights", layout="wide")
-st.title("📊 Stock Market Insights")
+st.set_page_config(layout="wide")
 
+# Company Selection UI
 # Fetch Available Companies
-st.sidebar.header("Select a Company")
-
 try:
     companies_response = requests.get(f"{BACKEND_URL}/companies")
     companies_response.raise_for_status()
     company_list = companies_response.json().get("companies", [])
 except requests.exceptions.RequestException:
     company_list = []
-    st.sidebar.error("❌ Failed to load companies. Check backend connection.")
+    st.error("❌ Failed to load companies. Check backend connection.")
 
 if company_list:
-    company_name = st.sidebar.selectbox("Choose a Company", company_list)
+    company_name = st.selectbox("Choose a Company", company_list)
     
-    st.markdown("### Select an Analysis Option")
+    # Fixed Selection & Buttons
+    st.markdown("---")
     col1, col2, col3 = st.columns(3)
     
     with col1:
@@ -73,14 +72,5 @@ if company_list:
                 st.error("❌ Failed to fetch news summary.")
         st.caption("Latest news summary about the company.")
 else:
-    st.sidebar.warning("⚠️ No companies available. Try uploading data.")
+    st.warning("⚠️ No companies available. Try uploading data.")
 
-# 🔹 Disclaimer Section
-st.markdown("---")
-st.markdown(
-    """
-    ### ⚠️ Disclaimer:
-    This AI-generated content is for informational purposes only and does not constitute financial advice.
-    Please consult a qualified financial advisor before making any investment decisions.
-    """
-)
