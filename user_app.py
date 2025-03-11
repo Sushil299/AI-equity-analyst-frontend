@@ -49,6 +49,18 @@ st.markdown("""
         overflow-wrap: break-word;
         word-wrap: break-word;
     }
+
+    /* Critical fix for text visibility in mobile cards */
+    .card p {
+        color: #333333 !important;
+        font-size: 16px !important;
+        line-height: 1.5 !important;
+        margin-bottom: 10px !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+
     .info-text {
         color: #424242;
         font-size: 0.9rem;
@@ -70,6 +82,8 @@ st.markdown("""
         }
         .card {
             padding: 0.75rem;
+            color: #333333 !important;
+            background-color: #f8f9fa !important;
         }
         .stButton>button {
             width: 100%;
@@ -142,54 +156,66 @@ if company_list:
         st.markdown("### Research Report")
 
         if st.button("Generate Report", key="research_btn", use_container_width=True):
-            report_placeholder = st.empty()
             with st.spinner("Generating report..."):
                 try:
                     response = requests.get(f"{BACKEND_URL}/summary/{company_name}")
                     response.raise_for_status()
                     analysis = response.json().get("final_summary", "")
                     if analysis:
-                        report_placeholder.markdown(f'<div class="card">{analysis}</div>', unsafe_allow_html=True)
+                        # Modified approach to ensure text is visible on mobile
+                        st.markdown("#### Analysis Results")
+                        # Use standard Streamlit text components instead of custom HTML
+                        st.write(analysis)
+
+                        # Fallback method if the above doesn't work
+                        st.markdown("---")
+                        st.markdown("#### Alternative View (if text above is not visible)")
+                        # Add background color directly to text instead of container
+                        for paragraph in analysis.split('\n\n'):
+                            if paragraph.strip():
+                                st.markdown(f"<div style='background-color: #f1f8fe; padding: 10px; margin-bottom: 10px; border-radius: 5px; color: #333333;'>{paragraph}</div>", unsafe_allow_html=True)
                     else:
-                        report_placeholder.warning("⚠️ No analysis available")
+                        st.warning("⚠️ No analysis available")
                 except requests.exceptions.RequestException:
-                    report_placeholder.error("❌ Failed to fetch analysis")
+                    st.error("❌ Failed to fetch analysis")
 
     # Reddit Opinion Tab
     with tabs[1]:
         st.markdown("### Reddit Sentiment")
 
         if st.button("Get Sentiment", key="reddit_btn", use_container_width=True):
-            reddit_placeholder = st.empty()
             with st.spinner("Analyzing Reddit..."):
                 try:
                     response = requests.get(f"{REDDIT_BACKEND_URL}/analyze_stock/{company_name}")
                     response.raise_for_status()
                     reddit_summary = response.json().get("reddit_summary", "")
                     if reddit_summary:
-                        reddit_placeholder.markdown(f'<div class="card">{reddit_summary}</div>', unsafe_allow_html=True)
+                        # Use direct Streamlit components for better mobile compatibility
+                        st.markdown("#### Reddit Analysis")
+                        st.write(reddit_summary)
                     else:
-                        reddit_placeholder.warning("⚠️ No Reddit discussions found")
+                        st.warning("⚠️ No Reddit discussions found")
                 except requests.exceptions.RequestException:
-                    reddit_placeholder.error("❌ Failed to fetch Reddit data")
+                    st.error("❌ Failed to fetch Reddit data")
 
     # News Tab
     with tabs[2]:
         st.markdown("### Latest News")
 
         if st.button("Get News", key="news_btn", use_container_width=True):
-            news_placeholder = st.empty()
             with st.spinner("Gathering news..."):
                 try:
                     response = requests.get(f"{REDDIT_BACKEND_URL}/analyze_stock/{company_name}")
                     response.raise_for_status()
                     news_summary = response.json().get("news_summary", "")
                     if news_summary:
-                        news_placeholder.markdown(f'<div class="card">{news_summary}</div>', unsafe_allow_html=True)
+                        # Use direct Streamlit components for better mobile compatibility
+                        st.markdown("#### News Summary")
+                        st.write(news_summary)
                     else:
-                        news_placeholder.warning("⚠️ No news found")
+                        st.warning("⚠️ No news found")
                 except requests.exceptions.RequestException:
-                    news_placeholder.error("❌ Failed to fetch news")
+                    st.error("❌ Failed to fetch news")
 
     # Compact footer for mobile
     st.markdown('<div class="mobile-spacer"></div>', unsafe_allow_html=True)
